@@ -1,0 +1,254 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Patient Details</title>
+
+</head>
+
+<body class="h-full m-0 p-0 overflow-auto">
+
+    <!-- Full height flex layout -->
+    <div class="flex h-full">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg p-6 flex flex-col">
+            <h1 class="text-2xl font-bold text-blue-600 mb-6">CHF Dashboard</h1>
+            <div class="mb-3">
+                <div id="patient-search-dropdown-container" class="relative"> <label for="patient-search-input"
+                        class="block text-sm font-medium text-gray-700 mb-2">Search or
+                        Select Patient</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <input type="text" id="patient-search-input" name="patient-search"
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm"
+                            placeholder="{{ patient.first_name }} {{ patient.last_name }}" autocomplete="off">
+                    </div>
+                    <div id="patient-results-list"
+                        class="absolute z-10 bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto hidden"
+                        style="width: calc(100% - 0px); left: 0px; box-sizing: border-box;"> </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <label for="time-period-select" class="block text-sm font-medium text-gray-700 mb-1">
+                    Filter by Time Period
+                </label>
+                <select id="time-period-select" class="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 bg-white
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                   cursor-pointer">
+                    <option value="" disabled selected></option>
+                </select>
+            </div>
+            <div class="mt-6"> {# Added margin-top for spacing from previous dropdown #}
+                <button id="generate-report-btn" class="w-full px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Generate Report
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 p-10 bg-gray-100 overflow-auto h-full">
+            <!-- Unified container for all main content card blocks -->
+            <div class="flex flex-col gap-6"> <!-- This container now controls all vertical spacing -->
+
+                <!-- Patient's profile card -->
+                <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-md">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                        {{ patient.first_name }} {{ patient.last_name }}
+                    </h2>
+                    <div class="space-y-2 text-gray-600">
+                        <p><span class="font-medium">ID:</span> <span class="font-medium">{{ patient_id }}</span></p>
+                        <p><span class="font-medium">Sex:</span> <span class="font-medium">{{ patient.sex }}</span></p>
+                        <p><span class="font-medium">Date of Birth:</span> <span
+                                class="font-medium">{{patient.date_of_birth}}</span></p>
+                    </div>
+                </div>
+
+                <!-- Weight & Height Cards Group -->
+                <div class="flex flex-wrap gap-6 justify-center"> <!-- Removed mt-4 -->
+                    <!-- Weight Chart Card -->
+                    <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-4xl" style="height: 400px;">
+                        <!-- Removed mt-8 -->
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Weight</h3>
+                        <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
+                            <!-- Latest Value Section (now on the left) -->
+                            <div
+                                class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
+                                <p class="text-gray-500">Latest Weight</p>
+                                <p class="text-5xl font-bold {{ latest_weight_color_class }} mt-1">
+                                    {{ latest_weight }} Kg
+                                </p>
+                            </div>
+
+                            <!-- Chart Section -->
+                            <div class="flex-1">
+                                <canvas id="weightChart" data-timestamps='{{ timestamps|safe }}'
+                                    data-weights='{{ weight_values|safe }}'
+                                    data-weight-daily-increase-critical='{{ WEIGHT_DAILY_INCREASE_CRITICAL_KG }}'
+                                    style="width: 100%; height: 100%;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Height Chart Card -->
+                    <div class="bg-white shadow-md rounded-lg p-6 w-64 text-center" style="height: 400px;">
+                        <!-- Removed mt-8 -->
+                        <h3 class="text-md font-semibold text-gray-700 mb-2">Current Height</h3>
+                        <div class="flex flex-col justify-center items-center h-full"> {# Changed h-40 to h-full #}
+                            <p class="text-7xl font-bold text-blue-500">
+                                {{ latest_height }}<span class="text-2xl">cm</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Oxygen Saturation Card -->
+                <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Oxygen Saturation</h3>
+                    <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
+
+                        <!-- Latest Value Section (now on the left) -->
+                        <div
+                            class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
+                            <p class="text-gray-500">Current SpO₂</p>
+                            <p class="text-7xl font-bold mt-2
+                                {% if latest_sp02 >= SPO2_CAUTION_THRESHOLD %}
+                                    text-blue-500
+                                {% elif latest_sp02 >= SPO2_CRITICAL_THRESHOLD %}
+                                    text-yellow-500
+                                {% else %}
+                                    text-red-500
+                                {% endif %}">
+                                {{ latest_sp02 }}%
+                            </p>
+                        </div>
+
+                        <!-- Chart Section -->
+                        <div class="flex-1">
+                            <canvas id="spO2Chart" data-timestamps='{{ timestamps|safe }}'
+                                data-sp02values='{{ sp02_values|safe }}'
+                                data-spo2-critical='{{ SPO2_CRITICAL_THRESHOLD }}'
+                                data-spo2-caution='{{ SPO2_CAUTION_THRESHOLD }}'
+                                style="width: 100%; height: 100%;"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- BMI Card -->
+                <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Body Mass Index</h3>
+                    <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
+
+                        <!-- Latest Value Section (now on the left) -->
+                        <div
+                            class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
+                            <p class="text-gray-500">Current BMI</p>
+                            <p class="text-5xl font-bold text-blue-500 mt-1">
+                                {{ latest_bmi }}
+                            </p>
+                        </div>
+
+                        <!-- Chart Section -->
+                        <div class="flex-1">
+                            <canvas id="bmiChart" data-timestamps='{{ timestamps|safe }}'
+                                data-bmis='{{ bmi_values|safe }}' style="width: 100%; height: 100%;"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Heart Rate Chart Card -->
+                <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Heart Rate Overview</h3>
+                    <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
+                        <div
+                            class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
+                            <p class="text-gray-500">Latest Heart Rate</p>
+                            <p class="text-5xl font-bold mt-1
+                        {% if latest_heart_rate >= HR_NORMAL_MIN and latest_heart_rate <= HR_NORMAL_MAX %}
+                            text-blue-500 
+                        {% else %}
+                            text-red-500 
+                        {% endif %}">
+                                {{ latest_heart_rate }} bpm
+                            </p>
+                        </div>
+
+                        <!-- Chart Section -->
+                        <div class="flex-1">
+                            <canvas id="heartRateChart" data-timestamps='{{ timestamps|safe }}'
+                                data-heart-rates='{{ heart_rate_values|safe }}' data-hr-normal-min='{{ HR_NORMAL_MIN }}'
+                                data-hr-normal-max='{{ HR_NORMAL_MAX }}' style="width: 100%; height: 100%;"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Blood Pressure Chart Card -->
+                <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-700">Blood Pressure Overview</h3>
+                    </div>
+                    <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
+                        <div
+                            class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
+                            <p class="text-gray-500">Latest Blood Pressure</p>
+                            <p class="text-4xl font-bold mt-1
+                        {# BP Categories Logic #}
+                        {% if latest_systolic_bp >= BP_STAGE2_SYSTOLIC_MIN or latest_diastolic_bp >= BP_STAGE2_DIASTOLIC_MIN %}
+                            text-red-500 {# Stage 2 Hypertension (Critical) #}
+                        {% elif latest_systolic_bp >= BP_STAGE1_SYSTOLIC_MIN and latest_systolic_bp <= BP_STAGE1_SYSTOLIC_MAX or latest_diastolic_bp >= BP_STAGE1_DIASTOLIC_MIN and latest_diastolic_bp <= BP_STAGE1_DIASTOLIC_MAX %}
+                            text-orange-500 {# Stage 1 Hypertension (Caution) #}
+                        {% elif latest_systolic_bp >= BP_ELEVATED_SYSTOLIC_MIN and latest_systolic_bp <= BP_ELEVATED_SYSTOLIC_MAX and latest_diastolic_bp < BP_ELEVATED_DIASTOLIC_MAX %}
+                            text-yellow-500 {# Elevated #}
+                        {% elif latest_systolic_bp < BP_NORMAL_SYSTOLIC_MAX and latest_diastolic_bp < BP_NORMAL_DIASTOLIC_MAX %}
+                            text-blue-500 {# Changed from text-green-500 to text-blue-500 for Normal #}
+                        {% else %}
+                            text-gray-500 {# Default if none of the above #}
+                        {% endif %}">
+                                {{ latest_systolic_bp }}/{{latest_diastolic_bp}} mmHg
+                            </p>
+                        </div>
+
+                        <div class="flex-1 ">
+                            <canvas id="bpChart" data-timestamps='{{ timestamps|safe }}'
+                                data-systolic='{{ systolic_bp_values|safe }}'
+                                data-diastolic='{{ diastolic_bp_values|safe }}'
+                                data-bp-normal-systolic-max='{{ BP_NORMAL_SYSTOLIC_MAX }}'
+                                data-bp-normal-diastolic-max='{{ BP_NORMAL_DIASTOLIC_MAX }}'
+                                data-bp-elevated-systolic-min='{{ BP_ELEVATED_SYSTOLIC_MIN }}'
+                                data-bp-elevated-systolic-max='{{ BP_ELEVATED_SYSTOLIC_MAX }}'
+                                data-bp-elevated-diastolic-max='{{ BP_ELEVATED_DIASTOLIC_MAX }}'
+                                data-bp-stage1-systolic-min='{{ BP_STAGE1_SYSTOLIC_MIN }}'
+                                data-bp-stage1-systolic-max='{{ BP_STAGE1_SYSTOLIC_MAX }}'
+                                data-bp-stage1-diastolic-min='{{ BP_STAGE1_DIASTOLIC_MIN }}'
+                                data-bp-stage1-diastolic-max='{{ BP_STAGE1_DIASTOLIC_MAX }}'
+                                data-bp-stage2-systolic-min='{{ BP_STAGE2_SYSTOLIC_MIN }}'
+                                data-bp-stage2-diastolic-min='{{ BP_STAGE2_DIASTOLIC_MIN }}'
+                                style="width: 100%; height: 100%;"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div> <!-- End of unified container -->
+        </main>
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/display_chart.js' %}"></script>
+    <script src="{% static 'js/monthList.js' %}"></script>
+    <script src="{% static 'js/dropdown.js' %}"></script>
+    <script src="{% static 'js/patient_search.js' %}"></script>
+</body>
+
+</html>

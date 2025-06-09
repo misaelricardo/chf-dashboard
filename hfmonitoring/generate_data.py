@@ -94,14 +94,20 @@ def generate_daily_vitals_trend(start_date, num_days, height, base_vitals, anoma
 
     # Anomaly days: mostly in last 14 days plus last day always included
     if anomaly_type:
-        recent_anomaly_days = random.sample(range(num_days - 14, num_days - 1), k=random.randint(2, 4))
-        anomaly_days = recent_anomaly_days + [num_days - 1]
+        # Ensure we don't try to sample from a negative range if num_days < 15
+        sample_range_start = max(0, num_days - 14)
+        if sample_range_start < num_days -1 :
+            recent_anomaly_days = random.sample(range(sample_range_start, num_days - 1), k=min(random.randint(2, 4), (num_days - 1) - sample_range_start))
+            anomaly_days = recent_anomaly_days + [num_days - 1]
+        else:
+            anomaly_days = [num_days - 1]
     else:
         anomaly_days = []
 
     previous_day_weight = current_weight
 
-    for i in range(num_days):
+    # FIXED: The loop now runs one extra time to include today
+    for i in range(num_days + 1):
         timestamp = start_date + timedelta(days=i)
 
         weight = random_deviation(current_weight, -0.2, 0.2)

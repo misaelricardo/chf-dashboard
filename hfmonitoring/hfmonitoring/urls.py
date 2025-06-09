@@ -1,26 +1,24 @@
-"""
-URL configuration for hfmonitoring project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
-from dashboard.views import list_patients, get_patient, patient_detail
+from dashboard.views import (
+    patient_landing_page, 
+    list_patients_api, 
+    get_patient, 
+    patient_detail, 
+    generate_abnormal_report
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('patients/', list_patients, name='list_patients'),
+    
+    # MODIFIED: This now points to your new landing page
+    path('patients/', patient_landing_page, name='patient_landing_page'),
+    
+    # NEW: The API endpoint for your patient search dropdown
+    path('api/list-patients/', list_patients_api, name='list_patients_api'),
+    
+    # These URLs remain the same
     path('patients/<str:patient_id>/json', get_patient, name='get_patient'),
     path("patients/<str:patient_id>/", patient_detail, name="patient_detail"),
+    path('api/patients/<str:patient_id>/generate-abnormal-report/', generate_abnormal_report, name='generate_abnormal_report'),
 ]

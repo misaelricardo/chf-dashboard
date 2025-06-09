@@ -6,7 +6,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <title>Patient Details</title>
+    <title>{{ patient.first_name }} {{ patient.last_name }}</title>
+
+
+    <style>
+        @media print {
+
+            /* Hide everything in the body by default */
+            body>* {
+                display: none;
+            }
+
+            /* Make ONLY the report modal visible */
+            #reportModal {
+                display: block;
+            }
+
+            /* Reset the modal's layout for printing */
+            #reportModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                background-color: white;
+                overflow: visible;
+            }
+
+            /* Remove the modal's container styling and use the correct property */
+            #reportModal>div {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 1rem !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                /* CORRECTED: This is the proper CSS property */
+            }
+
+            /* Hide any element with the 'no-print' class */
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
 
 </head>
 
@@ -48,9 +91,16 @@
                     <option value="" disabled selected></option>
                 </select>
             </div>
-            <div class="mt-6"> {# Added margin-top for spacing from previous dropdown #}
-                <button id="generate-report-btn" class="w-full px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Generate Report
+            <div class="pt-4 border-t border-gray-200 mt-4">
+                <button id="openReportModalBtn"
+                    class="w-full flex items-center justify-center p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors group">
+                    <svg class="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    <span class="ms-2 font-semibold">Generate Report</span>
                 </button>
             </div>
         </aside>
@@ -244,11 +294,54 @@
         </main>
 
     </div>
+
+    <!-- MODIFIED: Date Range Selection Modal -->
+    <div id="datePickerModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-8 m-4 max-w-sm w-full">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Generate Report For...</h2>
+                <button id="closeDatePickerModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            </div>
+            <!-- NEW: Preset date range buttons -->
+            <div class="mt-4 space-y-3">
+                <button id="report-last-2-weeks"
+                    class="w-full text-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-blue-800 font-semibold transition-colors shadow-sm border border-blue-200">
+                    Last 2 Weeks
+                </button>
+                <button id="report-last-1-month"
+                    class="w-full text-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-blue-800 font-semibold transition-colors shadow-sm border border-blue-200">
+                    Last 1 Month
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-8 m-4 max-w-6xl w-full max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6 flex-shrink-0">
+                <h2 id="report-title" class="text-2xl font-bold text-gray-800">Patient's Health Report</h2>
+                <button id="closeReportModalBtn"
+                    class="no-print text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+            </div>
+            <div id="reportContent" class="space-y-6 overflow-y-auto flex-grow pr-4">
+                <!-- Report data will be dynamically injected here -->
+            </div>
+            <div class="text-right mt-8 flex-shrink-0">
+                <button onclick="window.print()"
+                    class="no-print bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600">
+                    Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'js/display_chart.js' %}"></script>
     <script src="{% static 'js/monthList.js' %}"></script>
     <script src="{% static 'js/dropdown.js' %}"></script>
     <script src="{% static 'js/patient_search.js' %}"></script>
+    <script src="{% static 'js/report_generator.js' %}"></script>
 </body>
 
 </html>

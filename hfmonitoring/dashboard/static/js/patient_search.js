@@ -1,4 +1,4 @@
-const PATIENT_API_URL = '/patients/'; // Adjusted to your actual API endpoint
+const PATIENT_API_URL = '/api/list-patients/'; // Adjusted to your actual API endpoint
 
 const searchInput = document.getElementById('patient-search-input');
 const resultsList = document.getElementById('patient-results-list');

@@ -110,115 +110,38 @@
             <!-- Unified container for all main content card blocks -->
             <div class="flex flex-col gap-6"> <!-- This container now controls all vertical spacing -->
 
+
                 <!-- Patient's profile card -->
-                <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-md">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4">
-                        {{ patient.first_name }} {{ patient.last_name }}
-                    </h2>
-                    <div class="space-y-2 text-gray-600">
-                        <p><span class="font-medium">ID:</span> <span class="font-medium">{{ patient_id }}</span></p>
-                        <p><span class="font-medium">Sex:</span> <span class="font-medium">{{ patient.sex }}</span></p>
-                        <p><span class="font-medium">Date of Birth:</span> <span
-                                class="font-medium">{{patient.date_of_birth}}</span></p>
-                    </div>
-                </div>
+                <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-2xl">
 
-                <!-- Weight & Height Cards Group -->
-                <div class="flex flex-wrap gap-6 justify-center"> <!-- Removed mt-4 -->
-                    <!-- Weight Chart Card -->
-                    <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-4xl" style="height: 400px;">
-                        <!-- Removed mt-8 -->
-                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Weight</h3>
-                        <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
-                            <!-- Latest Value Section (now on the left) -->
-                            <div
-                                class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
-                                <p class="text-gray-500">Latest Weight</p>
-                                <p class="text-5xl font-bold {{ latest_weight_color_class }} mt-1">
-                                    {{ latest_weight }} Kg
-                                </p>
-                            </div>
-
-                            <!-- Chart Section -->
-                            <div class="flex-1">
-                                <canvas id="weightChart" data-timestamps='{{ timestamps|safe }}'
-                                    data-weights='{{ weight_values|safe }}'
-                                    data-weight-daily-increase-critical='{{ WEIGHT_DAILY_INCREASE_CRITICAL_KG }}'
-                                    style="width: 100%; height: 100%;"></canvas>
-                            </div>
-                        </div>
+                    <!-- Group for Name and ID -->
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">
+                            {{ patient.first_name }} {{ patient.last_name }}
+                        </h2>
+                        <p class="text-sm text-gray-500"><span class="font-medium">ID:</span> {{ patient_id }}</p>
                     </div>
-                    <!-- Height Chart Card -->
-                    <div class="bg-white shadow-md rounded-lg p-6 w-64 text-center" style="height: 400px;">
-                        <!-- Removed mt-8 -->
-                        <h3 class="text-md font-semibold text-gray-700 mb-2">Current Height</h3>
-                        <div class="flex flex-col justify-center items-center h-full"> {# Changed h-40 to h-full #}
-                            <p class="text-7xl font-bold text-blue-500">
-                                {{ latest_height }}<span class="text-2xl">cm</span>
+
+                    <!-- Grid layout for other details -->
+                    <div class="grid grid-cols-2 gap-x-8 text-gray-600">
+                        <!-- Left Column -->
+                        <div class="space-y-2">
+                            <p><span class="font-medium">Sex:</span> <span class="font-medium">{{patient.sex}}</span>
                             </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Oxygen Saturation Card -->
-                <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Oxygen Saturation</h3>
-                    <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
-
-                        <!-- Latest Value Section (now on the left) -->
-                        <div
-                            class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
-                            <p class="text-gray-500">Current SpO₂</p>
-                            <p class="text-7xl font-bold mt-2
-                                {% if latest_sp02 >= SPO2_CAUTION_THRESHOLD %}
-                                    text-blue-500
-                                {% elif latest_sp02 >= SPO2_CRITICAL_THRESHOLD %}
-                                    text-yellow-500
-                                {% else %}
-                                    text-red-500
-                                {% endif %}">
-                                {{ latest_sp02 }}%
-                            </p>
+                            <p><span class="font-medium">Date of Birth:</span> <span class="font-medium">{{patient.date_of_birth}}</span></p>
                         </div>
 
-                        <!-- Chart Section -->
-                        <div class="flex-1">
-                            <canvas id="spO2Chart" data-timestamps='{{ timestamps|safe }}'
-                                data-sp02values='{{ sp02_values|safe }}'
-                                data-spo2-critical='{{ SPO2_CRITICAL_THRESHOLD }}'
-                                data-spo2-caution='{{ SPO2_CAUTION_THRESHOLD }}'
-                                style="width: 100%; height: 100%;"></canvas>
+                        <!-- Right Column -->
+                        <div class="space-y-2">
+                            <p><span class="font-medium">Phone:</span> <span class="font-medium">{{contacts_phone}}</span></p>
+                            <p><span class="font-medium">Email:</span> <span class="font-medium">{{contacts_email}}</span></p>
                         </div>
-
-                    </div>
-                </div>
-
-                <!-- BMI Card -->
-                <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Body Mass Index</h3>
-                    <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
-
-                        <!-- Latest Value Section (now on the left) -->
-                        <div
-                            class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
-                            <p class="text-gray-500">Current BMI</p>
-                            <p class="text-5xl font-bold text-blue-500 mt-1">
-                                {{ latest_bmi }}
-                            </p>
-                        </div>
-
-                        <!-- Chart Section -->
-                        <div class="flex-1">
-                            <canvas id="bmiChart" data-timestamps='{{ timestamps|safe }}'
-                                data-bmis='{{ bmi_values|safe }}' style="width: 100%; height: 100%;"></canvas>
-                        </div>
-
                     </div>
                 </div>
 
                 <!-- Heart Rate Chart Card -->
                 <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
-                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Heart Rate Overview</h3>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Heart Rate</h3>
                     <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
                         <div
                             class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
@@ -246,7 +169,7 @@
                 <!-- Blood Pressure Chart Card -->
                 <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-700">Blood Pressure Overview</h3>
+                        <h3 class="text-lg font-semibold text-gray-700">Blood Pressure</h3>
                     </div>
                     <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
                         <div
@@ -290,6 +213,101 @@
                     </div>
                 </div>
 
+                <!-- Oxygen Saturation Card -->
+                <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Oxygen Saturation</h3>
+                    <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
+
+                        <!-- Latest Value Section (now on the left) -->
+                        <div
+                            class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
+                            <p class="text-gray-500">Latest SpO₂</p>
+                            <p class="text-7xl font-bold mt-2
+                                {% if latest_sp02 >= SPO2_CAUTION_THRESHOLD %}
+                                    text-blue-500
+                                {% elif latest_sp02 >= SPO2_CRITICAL_THRESHOLD %}
+                                    text-yellow-500
+                                {% else %}
+                                    text-red-500
+                                {% endif %}">
+                                {{ latest_sp02 }}%
+                            </p>
+                        </div>
+
+                        <!-- Chart Section -->
+                        <div class="flex-1">
+                            <canvas id="spO2Chart" data-timestamps='{{ timestamps|safe }}'
+                                data-sp02values='{{ sp02_values|safe }}'
+                                data-spo2-critical='{{ SPO2_CRITICAL_THRESHOLD }}'
+                                data-spo2-caution='{{ SPO2_CAUTION_THRESHOLD }}'
+                                style="width: 100%; height: 100%;"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Weight & Height Cards Group -->
+                <div class="flex flex-wrap gap-6 justify-center"> <!-- Removed mt-4 -->
+                    <!-- Weight Chart Card -->
+                    <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-4xl" style="height: 400px;">
+                        <!-- Removed mt-8 -->
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Weight</h3>
+                        <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
+                            <!-- Latest Value Section (now on the left) -->
+                            <div
+                                class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
+                                <p class="text-gray-500">Latest Weight</p>
+                                <p class="text-5xl font-bold {{ latest_weight_color_class }} mt-1">
+                                    {{ latest_weight }} Kg
+                                </p>
+                            </div>
+
+                            <!-- Chart Section -->
+                            <div class="flex-1">
+                                <canvas id="weightChart" data-timestamps='{{ timestamps|safe }}'
+                                    data-weights='{{ weight_values|safe }}'
+                                    data-weight-daily-increase-critical='{{ WEIGHT_DAILY_INCREASE_CRITICAL_KG }}'
+                                    style="width: 100%; height: 100%;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Height Chart Card -->
+                    <div class="bg-white shadow-md rounded-lg p-6 w-64 text-center" style="height: 400px;">
+                        <!-- Removed mt-8 -->
+                        <h3 class="text-md font-semibold text-gray-700 mb-2">Latest Height</h3>
+                        <div class="flex flex-col justify-center items-center h-full"> {# Changed h-40 to h-full #}
+                            <p class="text-7xl font-bold text-blue-500">
+                                {{ latest_height }}<span class="text-2xl">cm</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BMI Card -->
+                <div class="bg-white shadow-md rounded-lg p-6 w-full" style="height: 400px;"> <!-- Removed mt-8 -->
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Body Mass Index</h3>
+                    <div class="flex flex-col lg:flex-row gap-6 h-full pb-10"> {# Added pb-10 here #}
+
+                        <!-- Latest Value Section (now on the left) -->
+                        <div
+                            class="flex flex-col justify-center items-center w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-gray-200 pb-4 lg:pb-0 lg:pr-6">
+                            <p class="text-gray-500">Latest BMI</p>
+                            <p class="text-5xl font-bold text-blue-500 mt-1">
+                                {{ latest_bmi }}
+                            </p>
+                        </div>
+
+                        <!-- Chart Section -->
+                        <div class="flex-1">
+                            <canvas id="bmiChart" data-timestamps='{{ timestamps|safe }}'
+                                data-bmis='{{ bmi_values|safe }}' style="width: 100%; height: 100%;"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+
+                
+
             </div> <!-- End of unified container -->
         </main>
 
@@ -298,9 +316,9 @@
     <!-- MODIFIED: Date Range Selection Modal -->
     <div id="datePickerModal"
         class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl shadow-2xl p-8 m-4 max-w-sm w-full">
+        <div class="bg-white rounded-xl shadow-2xl p-8 m-4 max-w-md w-full">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-gray-800">Generate Report For...</h2>
+                <h2 class="text-xl font-bold text-gray-800">Select a time period for the report</h2>
                 <button id="closeDatePickerModalBtn" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
             </div>
             <!-- NEW: Preset date range buttons -->

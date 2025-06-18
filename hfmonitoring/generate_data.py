@@ -162,12 +162,6 @@ def generate_patient_specific(first_name, last_name, anomaly_type, start_date):
             "phone": fake.phone_number(),
             "email": fake.email()
         },
-        "emergency_contact": {
-            "name": fake.name(),
-            "phone": fake.phone_number(),
-            "email": fake.email(),
-            "relationship": random.choice(["Spouse", "Child", "Sibling", "Friend"])
-        },
         "vitals": generate_daily_vitals_trend(start_date, DAYS_TO_GENERATE, height, base_vitals, anomaly_type)
     }
 

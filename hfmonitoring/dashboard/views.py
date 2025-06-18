@@ -7,6 +7,7 @@ from django.db.models import Q
 from dashboard import threshold
 from datetime import datetime, time, date
 import logging
+from collections import OrderedDict
 
 # It's a good practice to set up a logger to see errors on the server side
 logger = logging.getLogger(__name__)
@@ -82,120 +83,109 @@ def get_patient(request, patient_id):
             "sex": patient.sex,
             "date_of_birth": patient.date_of_birth.isoformat() if patient.date_of_birth else None,
             "contacts": patient.contacts,
-            "emergency_contact": patient.emergency_contact,
             "vitals": patient.vitals,
         })
     except Patient.DoesNotExist:
         return JsonResponse({"error": "Patient not found"}, status=404)
 
 def patient_detail(request, patient_id):
-    # Ensure the patient_id is a valid ObjectId
+    """
+    Renders the detailed dashboard for a specific patient.
+    This version has corrected error handling and data processing.
+    """
     try:
-        patient_id = ObjectId(patient_id)
-    except Exception as e:
-        return JsonResponse({"error": "Invalid Patient ID format"}, status=400)
+        # First, try to convert the ID string to a valid ObjectId
+        patient_id_obj = ObjectId(patient_id)
+        # Then, use that object to find the patient in the database
+        patient = get_object_or_404(Patient, _id=patient_id_obj)
 
-    patient = Patient.objects.get(_id=patient_id)
-    vitals = patient.vitals
+    except Exception:
+        # This runs for any error, like an invalid ID format or if the patient is not found.
+        return JsonResponse({"error": "Patient not found or invalid ID."}, status=404)
 
+    # --- This block ensures patient.contacts is a dictionary ---
+    contacts_data = patient.contacts
+    
+    if isinstance(contacts_data, str):
+        try:
+            contacts_data = json.loads(contacts_data)
+        except json.JSONDecodeError:
+            contacts_data = None 
+
+    if hasattr(contacts_data, 'items'):
+        # Convert it to a plain dict to ensure template compatibility
+        contacts_dict = dict(contacts_data)
+    else:
+        # If it's not dict-like, default to an empty dict.
+        contacts_dict = {}
+    # --- End of contacts fix ---
+
+    vitals = patient.vitals if patient.vitals else []
+
+    # Calculate BMI for each vitals record
     for v in vitals:
         height = v.get("height")
         weight = v.get("weight")
         bmi = None
-        if height and weight and height > 0:
+        if height and weight and isinstance(height, (int, float)) and height > 0:
             height_m = height / 100
             bmi = round(weight / (height_m ** 2), 2)
         v["bmi"] = bmi
 
-    # Fetch all patients and exclude the _id field for better readability
-    all_patients = Patient.objects.all().values()
-    patients_list = [
-        {
-        "id": str(p["_id"]),
-        "full_name": f"{p.get('first_name', '')} {p.get('last_name', '')}".strip(),
-        **{k: v for k, v in p.items() if k != "_id"}
-    }
-        for p in all_patients
-    ]
+    # Prepare vital data for the patient charts
+    timestamps = [v["timestamp"].strftime("%d-%m-%Y") for v in vitals if v.get("timestamp")]
+    systolic_bp_values = [v.get("systolic_bp") for v in vitals]
+    diastolic_bp_values = [v.get("diastolic_bp") for v in vitals]
+    heart_rate_values = [v.get("heart_rate") for v in vitals]
+    weight_values = [v.get("weight") for v in vitals]
+    sp02_values = [v.get("oxygen_saturation") for v in vitals]
+    height_values = [v.get("height") for v in vitals]
+    bmi_values = [v.get("bmi") for v in vitals]
 
-    # Prepare vital data for the patient
-    if vitals:
-        timestamps = [v["timestamp"].strftime("%d-%m-%Y") for v in vitals]
-        systolic_bp_values = [v["systolic_bp"] for v in vitals]
-        diastolic_bp_values = [v["diastolic_bp"] for v in vitals]
-        latest_systolic_bp = systolic_bp_values[-1] if systolic_bp_values else None
-        latest_diastolic_bp = diastolic_bp_values[-1] if diastolic_bp_values else None
-        heart_rate_values = [v["heart_rate"] for v in vitals]
-        latest_heart_rate = heart_rate_values[-1] if heart_rate_values else None
-        weight_values = [v["weight"] for v in vitals]
-        latest_weight = weight_values[-1] if weight_values else None
-        sp02_values = [v["oxygen_saturation"] for v in vitals]
-        latest_sp02 = sp02_values[-1] if sp02_values else None
-        height_values = [v.get("height") for v in vitals]
-        latest_height = height_values[-1] if height_values else None
-        bmi_values = [v.get("bmi") for v in vitals]
-        latest_bmi = bmi_values[-1] if bmi_values else None
-
-         # --- LOGIC FOR LATEST WEIGHT COLOR ---
-        if len(weight_values) >= 2: # Need at least two readings to calculate change
-            previous_day_weight = weight_values[-2] # Second to last weight
-            current_day_weight = latest_weight
+    latest_weight = weight_values[-1] if weight_values else None
+    
+    # --- Logic for latest weight color ---
+    latest_weight_color_class = "text-blue-500"
+    if len(weight_values) >= 2:
+        previous_day_weight = weight_values[-2]
+        current_day_weight = latest_weight
+        if previous_day_weight is not None and current_day_weight is not None:
             weight_change = current_day_weight - previous_day_weight
-
             if abs(weight_change) > threshold.WEIGHT_DAILY_INCREASE_CRITICAL_KG:
-                latest_weight_color_class = "text-red-500" # Critical change (increase or decrease)
-            else:
-                latest_weight_color_class = "text-blue-500" # Normal change
-        elif len(weight_values) == 1: # Only one reading, no change to compare
-            latest_weight_color_class = "text-blue-500" # Default to blue
-        # --- END COLOR LOGIC ---
-
-    else:
-        timestamps = []
-        systolic_bp_values = []
-        diastolic_bp_values = []
-        heart_rate_values = []
-        weight_values = []
-        sp02_values = []
-        height_values = []
-        bmi_values = []
-        latest_systolic_bp = None
-        latest_diastolic_bp = None
-        latest_heart_rate = None
-        latest_weight = None
-        latest_sp02 = None
-        latest_height = None
-        latest_bmi = None
-        latest_weight_color_class = "text-gray-500"
-    # Pass patient data and the list of all patients to the template
+                latest_weight_color_class = "text-red-500"
+    
+    # --- Context for rendering the template ---
     context = {
+        # We pass the patient object, but we will use the specific variables below for contacts
         "patient": patient,
         "patient_id": str(patient._id),
-        "patients_list": patients_list,
+
+        # --- NEW: Pass phone and email as separate, top-level variables ---
+        "contacts_phone": contacts_dict.get('phone', 'N/A'),
+        "contacts_email": contacts_dict.get('email', 'N/A'),
+        
         "timestamps": json.dumps(timestamps),
         "systolic_bp_values": json.dumps(systolic_bp_values),
         "diastolic_bp_values": json.dumps(diastolic_bp_values),
-        "latest_systolic_bp": latest_systolic_bp,
-        "latest_diastolic_bp": latest_diastolic_bp,
+        "latest_systolic_bp": systolic_bp_values[-1] if systolic_bp_values else None,
+        "latest_diastolic_bp": diastolic_bp_values[-1] if diastolic_bp_values else None,
         "heart_rate_values": json.dumps(heart_rate_values),
-        "latest_heart_rate": latest_heart_rate,
+        "latest_heart_rate": heart_rate_values[-1] if heart_rate_values else None,
         "weight_values": json.dumps(weight_values),
-        "latest_weight":latest_weight,
+        "latest_weight": latest_weight,
         "sp02_values": json.dumps(sp02_values),
-        "latest_sp02": latest_sp02,
+        "latest_sp02": sp02_values[-1] if sp02_values else None,
         "height_values": json.dumps(height_values),
-        "latest_height": latest_height,
+        "latest_height": height_values[-1] if height_values else None,
         "bmi_values": json.dumps(bmi_values),
-        "latest_bmi": latest_bmi,
-
-        # --- THESE THRESHOLD VALUES HAVE ALREADY BEEN ADDED TO THE CONTEXT ---
+        "latest_bmi": bmi_values[-1] if bmi_values else None,
+        
+        # Thresholds
         "SPO2_CRITICAL_THRESHOLD": threshold.SPO2_CRITICAL_THRESHOLD,
         "SPO2_CAUTION_THRESHOLD": threshold.SPO2_CAUTION_THRESHOLD,
         "HR_NORMAL_MIN": threshold.HR_NORMAL_MIN,
         "HR_NORMAL_MAX": threshold.HR_NORMAL_MAX,
         "WEIGHT_DAILY_INCREASE_CRITICAL_KG": threshold.WEIGHT_DAILY_INCREASE_CRITICAL_KG,
-        
-        # BP Categories
         "BP_NORMAL_SYSTOLIC_MAX": threshold.BP_NORMAL_SYSTOLIC_MAX,
         "BP_NORMAL_DIASTOLIC_MAX": threshold.BP_NORMAL_DIASTOLIC_MAX,
         "BP_ELEVATED_SYSTOLIC_MIN": threshold.BP_ELEVATED_SYSTOLIC_MIN,
@@ -207,8 +197,6 @@ def patient_detail(request, patient_id):
         "BP_STAGE1_DIASTOLIC_MAX": threshold.BP_STAGE1_DIASTOLIC_MAX,
         "BP_STAGE2_SYSTOLIC_MIN": threshold.BP_STAGE2_SYSTOLIC_MIN,
         "BP_STAGE2_DIASTOLIC_MIN": threshold.BP_STAGE2_DIASTOLIC_MIN,
-        # --- END OF THRESHOLD ADDITIONS ---
-
         "latest_weight_color_class": latest_weight_color_class,
     }
     return render(request, "dashboard/patient.html", context)
@@ -285,9 +273,9 @@ def generate_abnormal_report(request, patient_id):
             hr = vital.get("heart_rate")
             if isinstance(hr, (int, float)):
                 if hr > threshold.HR_NORMAL_MAX:
-                    abnormal_details['Heart Rate'] = f"{hr} bpm (Tachycardia / Too Fast)"
+                    abnormal_details['Heart Rate'] = f"{hr} bpm (Outside of Normal Range)"
                 elif hr < threshold.HR_NORMAL_MIN:
-                    abnormal_details['Heart Rate'] = f"{hr} bpm (Bradycardia / Too Slow)"
+                    abnormal_details['Heart Rate'] = f"{hr} bpm (Outside of Normal Range)"
 
             # --- MODIFIED: Oxygen Saturation check with descriptive categories ---
             spo2 = vital.get("oxygen_saturation")

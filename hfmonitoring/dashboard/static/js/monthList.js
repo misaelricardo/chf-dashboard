@@ -36,8 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const periodOptions = [
             { value: '7d', text: 'Last 1 Week' },
             { value: '14d', text: 'Last 2 Weeks' },
-            { value: '30d', text: 'Last 1 Month' },
-            { value: '90d', text: 'Last 3 Months' }
+            { value: '30d', text: 'Last 1 Month' }
         ];
 
         // --- FIX IS HERE: Changed `label` to `text` in destructuring ---
@@ -69,9 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 filterStartDate = new Date(nowForCalc.setDate(nowForCalc.getDate() - 14));
             } else if (selectedPeriod === '30d') {
                 filterStartDate = new Date(nowForCalc.setMonth(nowForCalc.getMonth() - 1));
-            } else if (selectedPeriod === '90d') {
-                filterStartDate = new Date(nowForCalc.setMonth(nowForCalc.getMonth() - 3));
-            }
+            } 
             
             if (filterStartDate) {
                 filterStartDate.setHours(0, 0, 0, 0); 

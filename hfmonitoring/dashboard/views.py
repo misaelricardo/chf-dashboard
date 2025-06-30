@@ -19,12 +19,7 @@ def patient_landing_page(request):
     """
     return render(request, "dashboard/patient_landing.html")
 
-
-# RENAMED: This function now serves as the API for the search dropdown
 def list_patients_api(request):
-    """
-    API endpoint to search for patients and return a JSON list.
-    """
     search_query = request.GET.get('q', '').strip()
     patients_queryset = Patient.objects.all()
 
@@ -89,21 +84,13 @@ def get_patient(request, patient_id):
         return JsonResponse({"error": "Patient not found"}, status=404)
 
 def patient_detail(request, patient_id):
-    """
-    Renders the detailed dashboard for a specific patient.
-    This version has corrected error handling and data processing.
-    """
     try:
-        # First, try to convert the ID string to a valid ObjectId
         patient_id_obj = ObjectId(patient_id)
-        # Then, use that object to find the patient in the database
         patient = get_object_or_404(Patient, _id=patient_id_obj)
 
     except Exception:
-        # This runs for any error, like an invalid ID format or if the patient is not found.
         return JsonResponse({"error": "Patient not found or invalid ID."}, status=404)
 
-    # --- This block ensures patient.contacts is a dictionary ---
     contacts_data = patient.contacts
     
     if isinstance(contacts_data, str):
@@ -113,12 +100,9 @@ def patient_detail(request, patient_id):
             contacts_data = None 
 
     if hasattr(contacts_data, 'items'):
-        # Convert it to a plain dict to ensure template compatibility
         contacts_dict = dict(contacts_data)
     else:
-        # If it's not dict-like, default to an empty dict.
         contacts_dict = {}
-    # --- End of contacts fix ---
 
     vitals = patient.vitals if patient.vitals else []
 
@@ -154,16 +138,11 @@ def patient_detail(request, patient_id):
             if abs(weight_change) > threshold.WEIGHT_DAILY_INCREASE_CRITICAL_KG:
                 latest_weight_color_class = "text-red-500"
     
-    # --- Context for rendering the template ---
     context = {
-        # We pass the patient object, but we will use the specific variables below for contacts
         "patient": patient,
         "patient_id": str(patient._id),
-
-        # --- NEW: Pass phone and email as separate, top-level variables ---
         "contacts_phone": contacts_dict.get('phone', 'N/A'),
         "contacts_email": contacts_dict.get('email', 'N/A'),
-        
         "timestamps": json.dumps(timestamps),
         "systolic_bp_values": json.dumps(systolic_bp_values),
         "diastolic_bp_values": json.dumps(diastolic_bp_values),

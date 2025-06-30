@@ -20,10 +20,10 @@ class Patient(models.Model):
     last_name = models.CharField(max_length=100)
     sex = models.CharField(max_length=10, default="Not Specified")
     date_of_birth = models.DateField(null=True, blank=True)
-    contacts = models.JSONField()  # Example: {"phone": "+123456789", "email": "john@example.com"}
+    contacts = models.JSONField()  
     vitals = models.ArrayField(
         model_container=Vitals
-    )  # Embedded Vitals
+    )  
 
     objects = DjongoManager()
 

@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const timestamps = JSON.parse(heartRateCanvas.dataset.timestamps || "[]");
     const heartRates = JSON.parse(heartRateCanvas.dataset.heartRates || "[]");
 
-    // Read thresholds from data attributes
+    // Read thresholds
     const hrNormalMin = parseFloat(heartRateCanvas.dataset.hrNormalMin);
     const hrNormalMax = parseFloat(heartRateCanvas.dataset.hrNormalMax);
 
@@ -18,35 +18,34 @@ document.addEventListener("DOMContentLoaded", () => {
             label: "Heart Rate (bpm)",
             data: heartRates,
             fill: false,
-            // --- DYNAMIC COLORING FOR HEART RATE ---
             segment: {
               borderColor: ctx => {
                 const value = ctx.p1.parsed.y;
-                if (value < hrNormalMin || value > hrNormalMax) return 'rgba(220, 38, 38, 0.9)'; // Red (Critical)
-                return 'rgba(37, 99, 235, 0.9)'; // Blue (Normal)
+                if (value < hrNormalMin || value > hrNormalMax) return 'rgba(220, 38, 38, 0.9)'; 
+                return 'rgba(37, 99, 235, 0.9)'; 
               }
             },
             pointBackgroundColor: ctx => {
               const value = ctx.parsed.y;
-              if (value < hrNormalMin || value > hrNormalMax) return 'rgba(220, 38, 38, 1)'; // Red
-              return 'rgba(37, 99, 235, 1)'; // Blue
+              if (value < hrNormalMin || value > hrNormalMax) return 'rgba(220, 38, 38, 1)'; 
+              return 'rgba(37, 99, 235, 1)'; 
             },
-            pointBorderColor: ctx => { // Border of the data point circle
+            pointBorderColor: ctx => {
               const value = ctx.parsed.y;
-              if (value < hrNormalMin || value > hrNormalMax) return 'rgba(153, 27, 27, 1)'; // Darker Red
-              return 'rgba(7, 61, 178, 1)'; // Darker Blue
+              if (value < hrNormalMin || value > hrNormalMax) return 'rgba(153, 27, 27, 1)'; 
+              return 'rgba(7, 61, 178, 1)'; 
             },
-            pointBorderWidth: 2, // Make the border thicker
-            borderColor: (context) => { // Main line color, based on first value
+            pointBorderWidth: 2, 
+            borderColor: (context) => { 
               if (heartRates.length > 0) {
                 const firstValue = heartRates[0];
-                if (firstValue < hrNormalMin || firstValue > hrNormalMax) return 'rgba(220, 38, 38, 0.9)'; // Red
-                return 'rgba(37, 99, 235, 0.9)'; // Blue
+                if (firstValue < hrNormalMin || firstValue > hrNormalMax) return 'rgba(220, 38, 38, 0.9)'; 
+                return 'rgba(37, 99, 235, 0.9)'; 
               }
-              return 'rgba(37, 99, 235, 0.9)'; // Default if no data
+              return 'rgba(37, 99, 235, 0.9)'; 
             },
-            // --- END DYNAMIC COLORING ---
-            backgroundColor: "rgba(37, 99, 235, 0.7)", // Default blue fill
+            
+            backgroundColor: "rgba(37, 99, 235, 0.7)", 
             tension: 0.3,
             pointRadius: 4,
             pointHoverRadius: 6,
@@ -71,10 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
               display: true,
               title: { display: true, text: "Beats Per Minute (bpm)" },
               beginAtZero: false,
-              suggestedMin: 50, // Sensible range for HR
+              suggestedMin: 50, 
               suggestedMax: 120,
               ticks: {
-                stepSize: 10, // Steps of 10 for HR
+                stepSize: 10, 
                 callback: v => Number.isInteger(v) ? v : ""
               }
             }

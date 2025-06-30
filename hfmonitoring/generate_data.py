@@ -20,7 +20,7 @@ def random_deviation(base, min_dev, max_dev):
 
 def get_base_vitals():
     return {
-        "weight": round(random.uniform(68, 78), 1),
+        "weight": round(random.uniform(70, 80), 1),
         "systolic": random.randint(105, 115),
         "diastolic": random.randint(68, 78),
         "hr": random.randint(70, 85),
@@ -167,16 +167,20 @@ def generate_patient_specific(first_name, last_name, anomaly_type, start_date):
 
 
 patients_data = [
-    generate_patient_specific("Alice", "Smith", 'normal', START_DATE),
-    generate_patient_specific("Bob", "Johnson", 'weight_spike', START_DATE),
-    generate_patient_specific("Charlie", "Brown", 'weight_decrease', START_DATE),
-    generate_patient_specific("Diana", "Prince", 'hr_abnormal', START_DATE),
-    generate_patient_specific("Eve", "Adams", 'spo2_caution', START_DATE),
-    generate_patient_specific("Frank", "White", 'spo2_critical', START_DATE),
-    generate_patient_specific("Grace", "Hopper", 'normal', START_DATE),
-    generate_patient_specific("Harry", "Potter", 'bp_elevated', START_DATE),
-    generate_patient_specific("Ivy", "Green", 'bp_stage1', START_DATE),
-    generate_patient_specific("Jack", "Black", 'bp_stage2', START_DATE),
+    # Profil Normal
+    generate_patient_specific("Agus", "Prawira", 'normal', START_DATE),
+    # Profil untuk tes Berat Badan
+    generate_patient_specific("Budi", "Cahyono", 'weight_spike', START_DATE),
+    generate_patient_specific("Chandra", "Wijaya", 'weight_decrease', START_DATE),
+    # Profil untuk tes Detak Jantung
+    generate_patient_specific("Dewi", "Lestari", 'hr_abnormal', START_DATE),
+    # Profil untuk tes  Saturasi Oksigen
+    generate_patient_specific("Eka", "Fitriani", 'spo2_caution', START_DATE),
+    generate_patient_specific("Fajar", "Nugroho", 'spo2_critical', START_DATE),
+    # Profil untuk tes Tekanan Darah
+    generate_patient_specific("Hendra", "Gunawan", 'bp_elevated', START_DATE),
+    generate_patient_specific("Indah", "Puspita", 'bp_stage1', START_DATE),
+    generate_patient_specific("Joko", "Susilo", 'bp_stage2', START_DATE),
 ]
 
 patients_collection.insert_many(patients_data)

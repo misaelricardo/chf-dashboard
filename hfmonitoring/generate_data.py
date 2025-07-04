@@ -8,7 +8,7 @@ fake = Faker()
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["hf_monitoring_db"]
 patients_collection = db["patients"]
-patients_collection.delete_many({})  # Clear existing records
+patients_collection.delete_many({}) 
 
 DAYS_TO_GENERATE = 120  # 4 months
 START_DATE = datetime.now() - timedelta(days=DAYS_TO_GENERATE)
@@ -92,9 +92,8 @@ def generate_daily_vitals_trend(start_date, num_days, height, base_vitals, anoma
     current_hr = base_vitals["hr"]
     current_sp02 = base_vitals["sp02"]
 
-    # Anomaly days: mostly in last 14 days plus last day always included
+    
     if anomaly_type:
-        # Ensure we don't try to sample from a negative range if num_days < 15
         sample_range_start = max(0, num_days - 14)
         if sample_range_start < num_days -1 :
             recent_anomaly_days = random.sample(range(sample_range_start, num_days - 1), k=min(random.randint(2, 4), (num_days - 1) - sample_range_start))
@@ -106,7 +105,6 @@ def generate_daily_vitals_trend(start_date, num_days, height, base_vitals, anoma
 
     previous_day_weight = current_weight
 
-    # FIXED: The loop now runs one extra time to include today
     for i in range(num_days + 1):
         timestamp = start_date + timedelta(days=i)
 
@@ -137,7 +135,6 @@ def generate_daily_vitals_trend(start_date, num_days, height, base_vitals, anoma
 
         vitals.append(entry)
 
-        # Update current base values for next day
         current_weight = entry["weight"]
         current_systolic = entry["systolic_bp"]
         current_diastolic = entry["diastolic_bp"]

@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const reportLast1MonthBtn = document.getElementById('report-last-1-month');
     const closeReportModalBtn = document.getElementById('closeReportModalBtn');
     const reportContent = document.getElementById('reportContent');
-    const reportTitle = document.getElementById('report-title'); // Get the title element
+    const reportTitle = document.getElementById('report-title'); 
 
     openReportModalBtn.addEventListener('click', function() {
         datePickerModal.classList.remove('hidden');
@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function () {
         reportModal.classList.remove('hidden');
         reportContent.innerHTML = '<p class="text-center text-gray-500">Generating report...</p>';
         
-        // --- UPDATED: This section now sets your desired title ---
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         const formattedStartDate = startDate.toLocaleDateString('en-US', options);
         const formattedEndDate = endDate.toLocaleDateString('en-US', options);

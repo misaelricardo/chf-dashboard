@@ -9,14 +9,9 @@ from datetime import datetime, time, date
 import logging
 from collections import OrderedDict
 
-# It's a good practice to set up a logger to see errors on the server side
 logger = logging.getLogger(__name__)
 
 def patient_landing_page(request):
-    """
-    Renders the initial landing page that prompts the user
-    to select a patient.
-    """
     return render(request, "dashboard/patient_landing.html")
 
 def list_patients_api(request):
@@ -53,7 +48,6 @@ def list_patients_api(request):
 
     return JsonResponse(formatted_patients, safe=False)
 def get_patient(request, patient_id):
-    # Ensure the patient_id is a valid ObjectId
     try:
         patient_id = ObjectId(patient_id)
     except Exception as e:
@@ -61,7 +55,6 @@ def get_patient(request, patient_id):
 
     try:
         patient = Patient.objects.get(_id=patient_id)
-        # Calculate BMI for every vitals record
         for v in patient.vitals:
             height = v.get("height")
             weight = v.get("weight")
@@ -69,10 +62,10 @@ def get_patient(request, patient_id):
             if height and weight and height > 0:
                 height_m = height / 100
                 bmi = round(weight / (height_m ** 2), 2)
-            v["bmi"] = bmi  # mutate in-place
+            v["bmi"] = bmi  
         
         return JsonResponse({
-            "id": str(patient._id),  # Convert ObjectId to string for JSON response
+            "id": str(patient._id),  
             "first_name": patient.first_name,
             "last_name": patient.last_name,
             "sex": patient.sex,
@@ -106,7 +99,6 @@ def patient_detail(request, patient_id):
 
     vitals = patient.vitals if patient.vitals else []
 
-    # Calculate BMI for each vitals record
     for v in vitals:
         height = v.get("height")
         weight = v.get("weight")
@@ -116,7 +108,6 @@ def patient_detail(request, patient_id):
             bmi = round(weight / (height_m ** 2), 2)
         v["bmi"] = bmi
 
-    # Prepare vital data for the patient charts
     timestamps = [v["timestamp"].strftime("%d-%m-%Y") for v in vitals if v.get("timestamp")]
     systolic_bp_values = [v.get("systolic_bp") for v in vitals]
     diastolic_bp_values = [v.get("diastolic_bp") for v in vitals]
@@ -128,7 +119,6 @@ def patient_detail(request, patient_id):
 
     latest_weight = weight_values[-1] if weight_values else None
     
-    # --- Logic for latest weight color ---
     latest_weight_color_class = "text-blue-500"
     if len(weight_values) >= 2:
         previous_day_weight = weight_values[-2]
@@ -181,10 +171,6 @@ def patient_detail(request, patient_id):
     return render(request, "dashboard/patient.html", context)
 
 def generate_abnormal_report(request, patient_id):
-    """
-    API endpoint to generate a comprehensive report for a specific patient,
-    including categorized abnormal readings.
-    """
     try:
         start_date_str = request.GET.get('start_date')
         end_date_str = request.GET.get('end_date')
@@ -235,7 +221,6 @@ def generate_abnormal_report(request, patient_id):
             
             abnormal_details = {}
             
-            # --- MODIFIED: BP Check with descriptive categories ---
             systolic, diastolic = vital.get("systolic_bp"), vital.get("diastolic_bp")
             if isinstance(systolic, (int, float)) and isinstance(diastolic, (int, float)):
                 if systolic >= threshold.BP_STAGE2_SYSTOLIC_MIN or diastolic >= threshold.BP_STAGE2_DIASTOLIC_MIN:
@@ -245,10 +230,8 @@ def generate_abnormal_report(request, patient_id):
                     abnormal_details['Blood Pressure'] = f"{systolic}/{diastolic} mmHg (Stage 1 Hypertension)"
                 elif (threshold.BP_ELEVATED_SYSTOLIC_MIN <= systolic <= threshold.BP_ELEVATED_SYSTOLIC_MAX) and \
                      (diastolic < threshold.BP_ELEVATED_DIASTOLIC_MAX):
-                     # Note: Elevated BP is also considered abnormal in this context
                     abnormal_details['Blood Pressure'] = f"{systolic}/{diastolic} mmHg (Elevated)"
 
-            # --- MODIFIED: Heart Rate check with descriptive categories ---
             hr = vital.get("heart_rate")
             if isinstance(hr, (int, float)):
                 if hr > threshold.HR_NORMAL_MAX:
@@ -256,7 +239,6 @@ def generate_abnormal_report(request, patient_id):
                 elif hr < threshold.HR_NORMAL_MIN:
                     abnormal_details['Heart Rate'] = f"{hr} bpm (Outside of Normal Range)"
 
-            # --- MODIFIED: Oxygen Saturation check with descriptive categories ---
             spo2 = vital.get("oxygen_saturation")
             if isinstance(spo2, (int, float)):
                 if spo2 < threshold.SPO2_CRITICAL_THRESHOLD:
@@ -264,7 +246,6 @@ def generate_abnormal_report(request, patient_id):
                 elif spo2 < threshold.SPO2_CAUTION_THRESHOLD:
                     abnormal_details['Oxygen Saturation'] = f"{spo2}% (Caution)"
 
-            # --- MODIFIED: Weight Change check with descriptive category ---
             if i > 0:
                 previous_vital = all_vitals_sorted[i-1]
                 current_weight, previous_weight = vital.get('weight'), previous_vital.get('weight')

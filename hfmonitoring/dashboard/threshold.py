@@ -1,25 +1,14 @@
-# --- Oxygen Saturation (SpO2) ---
-# Value < 90% is Critical
-# Value >= 90% and < 95% is Caution
+
 SPO2_CRITICAL_THRESHOLD = 90
 SPO2_CAUTION_THRESHOLD = 95
 
-# --- Weight (kg) ---
-# Critical if current weight is more than X kg higher than the previous day's weight.
+
 WEIGHT_DAILY_INCREASE_CRITICAL_KG = 3
 
-# --- Heart Rate (bpm) ---
-# Value < 60 bpm is Critical (Bradycardia - too slow)
-# Value > 100 bpm is Critical (Tachycardia - too fast)
+
 HR_NORMAL_MIN = 60
 HR_NORMAL_MAX = 100
 
-# --- Blood Pressure (mmHg) ---
-# New BP categories based on provided definitions:
-# 1) normal (<120 systolic and <80 mm Hg diastolic)
-# 2) elevated (120–129 systolic and <80 mm Hg diastolic)
-# 3) stage 1 hypertension (130–139 systolic or 80–89 mm Hg diastolic)
-# 4) stage 2 hypertension (≥140 systolic or ≥90 mm Hg diastolic)
 
 # Normal BP
 BP_NORMAL_SYSTOLIC_MAX = 119

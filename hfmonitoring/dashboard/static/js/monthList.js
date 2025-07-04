@@ -39,11 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
             { value: '30d', text: 'Last 1 Month' }
         ];
 
-        // --- FIX IS HERE: Changed `label` to `text` in destructuring ---
         periodOptions.forEach(({ text, value }) => { 
             const option = document.createElement("option");
             option.value = value;
-            option.textContent = text; // Use 'text' here
+            option.textContent = text; 
             timePeriodSelect.appendChild(option);
         });
 
@@ -84,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const labelDate = new Date(year, month - 1, day); 
                     labelDate.setHours(0, 0, 0, 0);
 
-                    let normalizedFilterStartDate = filterStartDate; // Use the already normalized filterStartDate
+                    let normalizedFilterStartDate = filterStartDate; 
 
                     if (normalizedFilterStartDate === null || labelDate >= normalizedFilterStartDate) {
                         newLabels.push(labelStr);

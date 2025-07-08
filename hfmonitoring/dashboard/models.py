@@ -1,5 +1,6 @@
 from djongo import models
 from bson import ObjectId
+from django.contrib.auth.models import User
 from djongo.models import DjongoManager
 
 class Vitals(models.Model):
@@ -24,6 +25,7 @@ class Patient(models.Model):
     vitals = models.ArrayField(
         model_container=Vitals
     )  
+    doctors = models.ManyToManyField(User, related_name='patients')
 
     objects = DjongoManager()
 

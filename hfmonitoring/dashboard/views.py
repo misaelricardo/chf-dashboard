@@ -7,16 +7,20 @@ from django.db.models import Q
 from dashboard import threshold
 from datetime import datetime, time, date
 import logging
+from django.contrib.auth.decorators import login_required
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
+
+@login_required
 def patient_landing_page(request):
     return render(request, "dashboard/patient_landing.html")
 
+@login_required
 def list_patients_api(request):
     search_query = request.GET.get('q', '').strip()
-    patients_queryset = Patient.objects.all()
+    patients_queryset = Patient.objects.filter(doctors=request.user)
 
     if search_query:
         search_words = search_query.split()
@@ -47,14 +51,12 @@ def list_patients_api(request):
         })
 
     return JsonResponse(formatted_patients, safe=False)
+
+@login_required
 def get_patient(request, patient_id):
     try:
-        patient_id = ObjectId(patient_id)
-    except Exception as e:
-        return JsonResponse({"error": "Invalid Patient ID format"}, status=400)
-
-    try:
-        patient = Patient.objects.get(_id=patient_id)
+        patient_obj_id = ObjectId(patient_id)
+        patient = get_object_or_404(Patient, _id=patient_obj_id, doctors=request.user)
         for v in patient.vitals:
             height = v.get("height")
             weight = v.get("weight")
@@ -76,10 +78,11 @@ def get_patient(request, patient_id):
     except Patient.DoesNotExist:
         return JsonResponse({"error": "Patient not found"}, status=404)
 
+@login_required
 def patient_detail(request, patient_id):
     try:
         patient_id_obj = ObjectId(patient_id)
-        patient = get_object_or_404(Patient, _id=patient_id_obj)
+        patient = get_object_or_404(Patient, _id=patient_id_obj, doctors=request.user)
 
     except Exception:
         return JsonResponse({"error": "Patient not found or invalid ID."}, status=404)
@@ -170,6 +173,7 @@ def patient_detail(request, patient_id):
     }
     return render(request, "dashboard/patient.html", context)
 
+@login_required
 def generate_abnormal_report(request, patient_id):
     try:
         start_date_str = request.GET.get('start_date')
@@ -182,7 +186,7 @@ def generate_abnormal_report(request, patient_id):
         end_date = datetime.combine(datetime.strptime(end_date_str, '%Y-%m-%d'), time.max)
         patient_obj_id = ObjectId(patient_id)
 
-        patient = get_object_or_404(Patient, _id=patient_obj_id)
+        patient = get_object_or_404(Patient, _id=patient_obj_id, doctors=request.user)
         
         patient_vitals = getattr(patient, 'vitals', [])
         if not isinstance(patient_vitals, list):

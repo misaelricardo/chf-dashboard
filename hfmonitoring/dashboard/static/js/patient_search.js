@@ -42,7 +42,7 @@ function renderResults(filteredPatients) {
             resultItem.dataset.patientId = patient.id; 
 
             resultItem.addEventListener('click', () => {
-                const patientDetailUrl = `/patients/${patient.id}/`;
+                const patientDetailUrl = `/${patient.id}/`;
                 window.location.href = patientDetailUrl;
 
                 searchInput.value = `${patient.first_name} ${patient.last_name} (ID: ${patient.id || 'N/A'})`;

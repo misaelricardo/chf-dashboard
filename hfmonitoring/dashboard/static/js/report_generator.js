@@ -54,8 +54,8 @@ document.addEventListener('DOMContentLoaded', function () {
             reportTitle.textContent = `Patient's Health Report from ${formattedStartDate} to ${formattedEndDate}`;
         }
         
-        const pathParts = window.location.pathname.split('/');
-        const patientId = pathParts[2];
+        const pathParts = window.location.pathname.split('/').filter(part => part);
+        const patientId = pathParts[0];
 
         if (!patientId) {
             reportContent.innerHTML = `<p class="text-center text-red-500">Error: Could not find patient ID in the URL.</p>`;
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const startDateStr = startDate.toISOString().split('T')[0];
         const endDateStr = endDate.toISOString().split('T')[0];
-        const url = `/api/patients/${patientId}/generate-abnormal-report/?start_date=${startDateStr}&end_date=${endDateStr}`;
+        const url = `/api/${patientId}/generate-abnormal-report/?start_date=${startDateStr}&end_date=${endDateStr}`;
 
         fetch(url)
             .then(response => {

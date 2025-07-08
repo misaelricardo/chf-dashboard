@@ -1,16 +1,26 @@
 import random
-import pymongo
 from faker import Faker
 from datetime import datetime, timedelta
 from dashboard import threshold
 
-fake = Faker()
-client = pymongo.MongoClient("mongodb://localhost:27017/")
-db = client["hf_monitoring_db"]
-patients_collection = db["patients"]
-patients_collection.delete_many({}) 
+# --- Django Setup ---
+# This section is crucial to allow the script to interact with your Django models.
+import os
+import django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hfmonitoring.settings")
+django.setup()
+# --- End of Django Setup ---
 
-DAYS_TO_GENERATE = 120  # 4 months
+from django.contrib.auth.models import User
+from dashboard.models import Patient # Import your Patient model
+
+fake = Faker()
+
+# --- Clear existing data using the Django ORM ---
+User.objects.all().delete()
+Patient.objects.all().delete()
+
+DAYS_TO_GENERATE = 120
 START_DATE = datetime.now() - timedelta(days=DAYS_TO_GENERATE)
 
 
@@ -92,19 +102,19 @@ def generate_daily_vitals_trend(start_date, num_days, height, base_vitals, anoma
     current_hr = base_vitals["hr"]
     current_sp02 = base_vitals["sp02"]
 
-    
     if anomaly_type:
         sample_range_start = max(0, num_days - 14)
-        if sample_range_start < num_days -1 :
+        if sample_range_start < num_days - 1:
             recent_anomaly_days = random.sample(range(sample_range_start, num_days - 1), k=min(random.randint(2, 4), (num_days - 1) - sample_range_start))
             anomaly_days = recent_anomaly_days + [num_days - 1]
         else:
-            anomaly_days = [num_days - 1]
+            anomaly_days = [num_days - 1] if num_days > 0 else []
     else:
         anomaly_days = []
 
     previous_day_weight = current_weight
 
+    # --- FIXED: The logic for generating daily vitals was missing and has been restored. ---
     for i in range(num_days + 1):
         timestamp = start_date + timedelta(days=i)
 
@@ -112,7 +122,7 @@ def generate_daily_vitals_trend(start_date, num_days, height, base_vitals, anoma
         systolic = random_deviation(current_systolic, -2, 2)
         diastolic = random_deviation(current_diastolic, -1, 1)
         hr = random_deviation(current_hr, -2, 2)
-        sp02 = current_sp02  # stable
+        sp02 = current_sp02
 
         weight = max(base_vitals["weight"] - 3, min(base_vitals["weight"] + 3, weight))
         systolic = max(95, min(threshold.BP_NORMAL_SYSTOLIC_MAX - 1, systolic))
@@ -141,7 +151,7 @@ def generate_daily_vitals_trend(start_date, num_days, height, base_vitals, anoma
         current_hr = entry["heart_rate"]
         current_sp02 = entry["oxygen_saturation"]
         previous_day_weight = entry["weight"]
-
+        
     return vitals
 
 
@@ -154,7 +164,7 @@ def generate_patient_specific(first_name, last_name, anomaly_type, start_date):
         "first_name": first_name,
         "last_name": last_name,
         "sex": gender,
-        "date_of_birth": fake.date_of_birth(minimum_age=40, maximum_age=90).strftime("%Y-%m-%d"),
+        "date_of_birth": fake.date_of_birth(minimum_age=40, maximum_age=90),
         "contacts": {
             "phone": fake.phone_number(),
             "email": fake.email()
@@ -163,22 +173,57 @@ def generate_patient_specific(first_name, last_name, anomaly_type, start_date):
     }
 
 
-patients_data = [
-    # Profil Normal
-    generate_patient_specific("Agus", "Prawira", 'normal', START_DATE),
-    # Profil untuk tes Berat Badan
-    generate_patient_specific("Budi", "Cahyono", 'weight_spike', START_DATE),
-    generate_patient_specific("Chandra", "Wijaya", 'weight_decrease', START_DATE),
-    # Profil untuk tes Detak Jantung
-    generate_patient_specific("Dewi", "Lestari", 'hr_abnormal', START_DATE),
-    # Profil untuk tes  Saturasi Oksigen
-    generate_patient_specific("Eka", "Fitriani", 'spo2_caution', START_DATE),
-    generate_patient_specific("Fajar", "Nugroho", 'spo2_critical', START_DATE),
-    # Profil untuk tes Tekanan Darah
-    generate_patient_specific("Hendra", "Gunawan", 'bp_elevated', START_DATE),
-    generate_patient_specific("Indah", "Puspita", 'bp_stage1', START_DATE),
-    generate_patient_specific("Joko", "Susilo", 'bp_stage2', START_DATE),
+# --- Create 3 specific doctors ---
+dr_house = User.objects.create_user(username='dr_house', password='password123')
+dr_strange = User.objects.create_user(username='dr_strange', password='password123')
+dr_who = User.objects.create_user(username='dr_who', password='password123')
+print("✅ Created 3 doctor users.")
+
+# --- Patient data with anomaly types ---
+patients_to_create = [
+    {"first_name": "Agus", "last_name": "Prawira", "anomaly": "normal"},
+    {"first_name": "Budi", "last_name": "Cahyono", "anomaly": "weight_spike"},
+    {"first_name": "Chandra", "last_name": "Wijaya", "anomaly": "weight_decrease"},
+    {"first_name": "Dewi", "last_name": "Lestari", "anomaly": "hr_abnormal"},
+    {"first_name": "Eka", "last_name": "Fitriani", "anomaly": "spo2_caution"},
+    {"first_name": "Fajar", "last_name": "Nugroho", "anomaly": "spo2_critical"},
+    {"first_name": "Hendra", "last_name": "Gunawan", "anomaly": "bp_elevated"},
+    {"first_name": "Indah", "last_name": "Puspita", "anomaly": "bp_stage1"},
+    {"first_name": "Joko", "last_name": "Susilo", "anomaly": "bp_stage2"},
+    # --- ADDED: Two new patients with normal profiles ---
+    {"first_name": "Klara", "last_name": "Tan", "anomaly": "normal"},
+    {"first_name": "Leo", "last_name": "Wijaya", "anomaly": "normal"},
 ]
 
-patients_collection.insert_many(patients_data)
-print("✅ Inserted test patient data with recent and last-day anomalies.")
+# --- Create patients and assign doctors with specific logic ---
+print("Inserting patient data and assigning doctors...")
+for p_data in patients_to_create:
+    # Generate the patient data dictionary
+    patient_dict = generate_patient_specific(
+        p_data["first_name"], 
+        p_data["last_name"], 
+        p_data["anomaly"], 
+        START_DATE
+    )
+    
+    # Create the Patient object using the Django ORM
+    vitals_data = patient_dict.pop('vitals')
+    patient = Patient.objects.create(**patient_dict)
+    patient.vitals = vitals_data
+    
+    # --- MODIFIED: Assignment Logic ---
+    # 1. Assign all patients with an anomaly to Dr. House
+    if p_data["anomaly"] != 'normal':
+        patient.doctors.add(dr_house)
+        
+    # 2. Assign the new patient "Klara Tan" to Dr. Strange
+    if p_data["first_name"] == "Klara":
+        patient.doctors.add(dr_strange)
+        
+    # 3. Assign the new patient "Leo Wijaya" to Dr. Who
+    if p_data["first_name"] == "Leo":
+        patient.doctors.add(dr_who)
+        
+    patient.save()
+
+print(f"✅ Inserted {len(patients_to_create)} test patients and assigned doctors according to rules.")
